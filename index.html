@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPI: This is my school - Unit 1</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        deepPurple: '#3C096C',
+                        deepPurpleLight: '#5A189A',
+                        purpleDarkest: '#240046',
+                        tosca: '#2EC4B6',
+                        toscaLight: '#CBF3F0',
+                        offWhite: '#F8F9FA',
+                        accentYellow: '#FF9E00',
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        '3d': '0 6px 0 0 #209d91, 0 10px 10px rgba(0,0,0,0.15)',
+                        '3d-purple': '0 6px 0 0 #240046, 0 10px 10px rgba(0,0,0,0.15)',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti & Html2Canvas -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+            background-color: #F8F9FA;
+            color: #1a202c;
+        }
+        .dark body {
+            background-color: #121212;
+            color: #e2e8f0;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #2EC4B6; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3C096C; }
+
+        /* Canva Card Style */
+        .canva-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px -5px rgba(60, 9, 108, 0.08);
+            border: 2px solid rgba(255,255,255,0.5);
+            transition: all 0.3s ease;
+        }
+        .dark .canva-card {
+            background: #1e1e2d;
+            border-color: #2d2d3f;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 3D Button Style */
+        .btn-3d {
+            transition: all 0.1s ease;
+            position: relative;
+            top: 0;
+        }
+        .btn-3d:active {
+            top: 4px;
+            box-shadow: 0 2px 0 0 #209d91, 0 4px 5px rgba(0,0,0,0.1) !important;
+        }
+
+        /* Certificate A4 Size for Export */
+        #cert-container {
+            width: 1123px; /* A4 Landscape 300dpi approx */
+            height: 794px;
+            background: linear-gradient(135deg, #F8F9FA, #CBF3F0);
+            position: absolute;
+            left: -9999px;
+            top: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 10px solid #3C096C;
+            box-sizing: border-box;
+        }
+        
+        /* Interactive Match Styles */
+        .match-item {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .match-selected {
+            border-color: #FF9E00 !important;
+            background-color: rgba(255, 158, 0, 0.1) !important;
+            transform: scale(1.05);
+        }
+        .match-correct {
+            border-color: #2EC4B6 !important;
+            background-color: rgba(46, 196, 182, 0.1) !important;
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: linear-gradient(145deg, #2EC4B6, #209d91);
+            color: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 15px rgba(46, 196, 182, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Toast Notification */
+        #toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            transition: transform 0.3s ease;
+            z-index: 9999;
+        }
+        #toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col relative overflow-x-hidden">
+
+    <!-- Audio Element -->
+    <audio id="bgmMusic" loop preload="auto">
+        <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="bg-deepPurple text-white px-6 py-3 rounded-full shadow-lg font-bold flex items-center gap-3">
+        <i class="fa-solid fa-circle-info text-tosca"></i>
+        <span id="toastMsg">Pesan</span>
+    </div>
+
+    <!-- ==================== LOGIN / LANDING PAGE ==================== -->
+    <div id="login-screen" class="fixed inset-0 z-50 bg-offWhite dark:bg-gray-900 flex items-center justify-center p-4">
+        <!-- Background Pattern -->
+        <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#3C096C 2px, transparent 2px); background-size: 30px 30px;"></div>
+        
+        <div class="canva-card p-8 md:p-12 w-full max-w-lg relative z-10 text-center shadow-2xl border-t-8 border-t-deepPurple">
+            <div class="w-20 h-20 bg-toscaLight text-tosca rounded-2xl mx-auto flex items-center justify-center text-4xl mb-4 transform rotate-3">
+                <i class="fa-solid fa-school"></i>
+            </div>
+            <h1 class="text-xs font-black text-tosca uppercase tracking-widest mb-2">Media Pembelajaran Interaktif</h1>
+            <h2 class="text-2xl md:text-3xl font-extrabold text-deepPurple dark:text-tosca mb-1">This is my school</h2>
+            <p class="text-gray-600 dark:text-gray-300 font-bold mb-8">Unit 1: School Buildings (Grade VII)</p>
+
+            <div class="space-y-4 text-left">
+                <div class="bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 text-sm p-4 rounded-xl border border-blue-200 mb-4 flex gap-3 items-start">
+                    <i class="fa-solid fa-circle-info mt-1"></i>
+                    <p><b>Instruksi:</b> Silakan masukkan nama lengkap dan pilih kelas Anda untuk memulai pembelajaran interaktif ini. Pastikan Anda berada di lingkungan yang nyaman.</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">Nama Murid</label>
+                    <input type="text" id="studentNameInput" placeholder="Ketik nama lengkapmu..." class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-tosca focus:ring-0 transition-colors bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">Kelas</label>
+                    <select id="studentClassSelect" onchange="toggleManualClass()" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-tosca focus:ring-0 transition-colors bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white outline-none">
+                        <option value="" disabled selected>Pilih kelasmu...</option>
+                        <option value="VII A">VII A</option>
+                        <option value="VII B">VII B</option>
+                        <option value="VII C">VII C</option>
+                        <option value="VII D">VII D</option>
+                        <option value="VII E">VII E</option>
+                        <option value="manual">LAINNYA / TULIS MANUAL</option>
+                    </select>
+                </div>
+                
+                <div id="manualClassContainer" class="hidden">
+                    <label class="block text-sm font-bold text-gray-700 dark:text-gray-200 mb-1">Tulis Kelas Manual</label>
+                    <input type="text" id="manualClassInput" placeholder="Contoh: VII F" class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-tosca focus:ring-0 transition-colors bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-white outline-none">
+                </div>
+
+                <button onclick="startLearning()" class="w-full mt-6 bg-deepPurple hover:bg-deepPurpleLight text-white font-extrabold py-4 rounded-xl shadow-lg transition-all transform hover:scale-105 btn-3d shadow-3d-purple flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-rocket"></i> MULAI BELAJAR
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MAIN APP ==================== -->
+    <div id="app-screen" class="hidden flex-col min-h-screen">
+        
+        <!-- Header -->
+        <header class="sticky top-0 z-40 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm border-b border-gray-200 dark:border-gray-700 transition-colors">
+            <div class="w-full bg-gray-200 dark:bg-gray-700 h-1.5">
+                <div id="globalProgress" class="bg-gradient-to-r from-tosca to-deepPurple h-1.5 w-0 transition-all duration-500"></div>
+            </div>
+            <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="goHome()">
+                    <div class="w-10 h-10 bg-deepPurple text-white rounded-lg flex items-center justify-center shadow">
+                        <i class="fa-solid fa-school"></i>
+                    </div>
+                    <div class="hidden sm:block">
+                        <h2 class="font-extrabold text-deepPurple dark:text-tosca leading-tight">School Buildings</h2>
+                        <p class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Unit 1 - Grade VII</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 sm:gap-4">
+                    <div class="bg-toscaLight/30 dark:bg-tosca/10 px-3 py-1.5 rounded-full border border-tosca/30 flex items-center gap-2">
+                        <i class="fa-solid fa-user-graduate text-tosca"></i>
+                        <span id="displayStudentInfo" class="text-sm font-bold text-deepPurple dark:text-gray-200 max-w-[100px] sm:max-w-[200px] truncate">Murid</span>
+                    </div>
+
+                    <!-- Controls -->
+                    <button onclick="toggleDarkMode()" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-yellow-400 flex items-center justify-center hover:bg-gray-200 transition-colors" title="Mode Terang/Gelap">
+                        <i id="themeIcon" class="fa-solid fa-moon"></i>
+                    </button>
+                    <button onclick="toggleBGM()" class="w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 flex items-center justify-center hover:bg-gray-200 transition-colors" title="Musik Latar">
+                        <i id="bgmIcon" class="fa-solid fa-music"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-grow max-w-7xl mx-auto px-4 py-8 w-full">
+            
+            <!-- Dashboard Menu -->
+            <section id="sec-menu" class="page-section block">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl sm:text-4xl font-black text-deepPurple dark:text-white mb-3">Peta Perjalanan Belajar</h2>
+                    <p class="text-gray-600 dark:text-gray-400">Pilih menu di bawah ini secara berurutan untuk hasil yang maksimal!</p>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
+                    <!-- Menu Buttons dynamically generated -->
+                    <button onclick="navTo('tujuan')" class="btn-3d shadow-3d bg-tosca text-white rounded-2xl p-6 flex flex-col items-center justify-center gap-3 hover:bg-teal-400">
+                        <i class="fa-solid fa-bullseye text-4xl"></i>
+                        <span class="font-bold text-sm sm:text-base text-center">Tujuan Pembelajaran</span>
+                    </button>
+                    <button onclick="navTo('apersepsi')" class="btn-3d shadow-3d-purple bg-deepPurple text-white rounded-2xl p-6 flex flex-col items-center justify-center gap-3 hover:bg-deepPurpleLight">
+                        <i class="fa-solid fa-lightbulb text-4xl"></i>
+                        <span class="font-bold text-sm sm:text-base text-center">Apersepsi</span>
+                    </button>
+                    <button onclick="navTo('asesmen-awal')" class="btn-3d shadow-3d bg-accentYellow text-white rounded-2xl p-6 flex flex-col items-center justify-center gap-3 hover:bg-yellow-400">
+                        <i class="fa-solid fa-clipboard-question text-4xl"></i>
+                        <span class="font-bold text-sm sm:text-base text-center">Asesmen Awal</span>
+                    </button>
+                    <button onclick="navTo('materi')" class="btn-3d shadow-3d bg-blue-500 text-white rounded-2xl p-6 flex flex-col items-center justify-center gap-3 hover:bg-blue-400">
+                        <i class="fa-solid fa-book-open-reader text-4xl"></i>
+                        <span class="font-bold text-sm sm:text-base text-center">Materi Pembelajaran</span>
+                    </button>
+                    <button onclick="navTo('simulasi')" class="btn-3d shadow-3d-purple bg-pink-500 text-white rounded-2xl p-6 flex flex-col items-center justify-center gap-3 hover:bg-pink-400">
+                        <i class="fa-solid fa-puzzle-piece text-4xl"></i>
+                        <span class="font-bold text-sm sm:text-base text-center">Simulasi / Aktivitas</span>
+                    </button>
+                    <button onclick="navTo('kuis')" class="btn-3d shadow-3d bg-indigo-500 text-white rounded-2xl p-6 flex flex-col items-center justify-center gap-3 hover:bg-indigo-400">
+                        <i class="fa-solid fa-gamepad text-4xl"></i>
+                        <span class="font-bold text-sm sm:text-base text-center">Kuis HOTS</span>
+                    </button>
+                    <button onclick="navTo('asesmen-akhir')" class="btn-3d shadow-3d-purple bg-emerald-600 text-white rounded-2xl p-6 flex flex-col items-center justify-center gap-3 hover:bg-emerald-500">
+                        <i class="fa-solid fa-file-pen text-4xl"></i>
+                        <span class="font-bold text-sm sm:text-base text-center">Asesmen Akhir</span>
+                    </button>
+                    <button onclick="navTo('refleksi')" class="btn-3d shadow-3d bg-amber-600 text-white rounded-2xl p-6 flex flex-col items-center justify-center gap-3 hover:bg-amber-500">
+                        <i class="fa-solid fa-heart-circle-check text-4xl"></i>
+                        <span class="font-bold text-sm sm:text-base text-center">Refleksi</span>
+                    </button>
+                    <button onclick="navTo('sertifikat')" class="btn-3d shadow-3d-purple bg-purple-700 text-white rounded-2xl p-6 flex flex-col items-center justify-center gap-3 hover:bg-purple-600">
+                        <i class="fa-solid fa-award text-4xl"></i>
+                        <span class="font-bold text-sm sm:text-base text-center">Sertifikat Hasil Belajar</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- 1. Tujuan Pembelajaran -->
+            <section id="sec-tujuan" class="page-section hidden max-w-3xl mx-auto space-y-6">
+                <div class="flex items-center gap-4 mb-6">
+                    <button onclick="tts('Tujuan Pembelajaran. Setelah mempelajari unit ini, murid diharapkan dapat: 1. Mengidentifikasi nama-nama bangunan dan fasilitas sekolah dalam bahasa Inggris. 2. Menggunakan prepositions of place untuk menunjukkan lokasi. 3. Membaca dan membuat peta sederhana dari area sekolah.')" class="bg-tosca text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition"><i class="fa-solid fa-volume-high"></i></button>
+                    <h2 class="text-3xl font-black text-deepPurple dark:text-tosca">Tujuan Pembelajaran 🎯</h2>
+                </div>
+                <div class="canva-card p-8">
+                    <p class="text-gray-600 dark:text-gray-300 mb-6 font-semibold">By the end of this lesson, you will be able to:</p>
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-check-circle text-tosca text-xl mt-1"></i>
+                            <span class="font-bold text-gray-800 dark:text-gray-200">Identifying the names of school buildings and facilities in English (classrooms, library, laboratory, canteen, etc.).</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-check-circle text-tosca text-xl mt-1"></i>
+                            <span class="font-bold text-gray-800 dark:text-gray-200">Using prepositions of place (such as <i>next to</i>, <i>across from</i>, <i>between</i>, <i>in front of</i>) to indicate location.</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <i class="fa-solid fa-check-circle text-tosca text-xl mt-1"></i>
+                            <span class="font-bold text-gray-800 dark:text-gray-200">Reading and creating a simple map of the school grounds.</span>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 2. Apersepsi -->
+            <section id="sec-apersepsi" class="page-section hidden max-w-4xl mx-auto">
+                <div class="flex items-center gap-4 mb-6">
+                    <button onclick="tts('Apersepsi. Mari kita mulai dengan membayangkan sekolah kita. Perhatikan gambar ilustrasi sekolah berikut. Apa pendapatmu tentang kelasmu? Apakah besar atau kecil? Berapa banyak teman yang kamu miliki di kelas?')" class="bg-tosca text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition"><i class="fa-solid fa-volume-high"></i></button>
+                    <h2 class="text-3xl font-black text-deepPurple dark:text-tosca">Apersepsi 💡</h2>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div class="canva-card p-4 overflow-hidden rounded-2xl bg-gradient-to-br from-blue-100 to-toscaLight">
+                        <!-- Illustration using Placehold / FontAwesome composition for safe cross-origin -->
+                        <div class="aspect-video flex items-center justify-center text-8xl text-deepPurple/20 relative">
+                            <i class="fa-solid fa-school"></i>
+                            <i class="fa-solid fa-tree absolute left-10 bottom-4 text-4xl text-green-500/50"></i>
+                            <i class="fa-solid fa-users absolute right-12 bottom-6 text-5xl text-tosca/50"></i>
+                            <i class="fa-solid fa-sun absolute right-10 top-6 text-5xl text-yellow-400"></i>
+                        </div>
+                    </div>
+                    <div class="space-y-6">
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border-l-8 border-tosca">
+                            <h3 class="text-xl font-bold mb-2">Think About It! 🤔</h3>
+                            <ul class="space-y-3 text-gray-700 dark:text-gray-300 font-medium list-disc ml-5">
+                                <li>What do you think about your class?</li>
+                                <li>Is it big or small?</li>
+                                <li>How many friends do you have in your class?</li>
+                                <li>What is your favorite place in the school?</li>
+                            </ul>
+                        </div>
+                        <p class="text-gray-500 dark:text-gray-400 text-sm italic">Pikirkan jawabannya di dalam hati sebelum kita melanjutkan petualangan ini!</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. Asesmen Awal -->
+            <section id="sec-asesmen-awal" class="page-section hidden max-w-3xl mx-auto">
+                <div class="flex items-center gap-4 mb-6">
+                    <button onclick="tts('Asesmen Awal. Mari cek pemahaman awalmu. Jawablah lima pertanyaan berikut.')" class="bg-tosca text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition"><i class="fa-solid fa-volume-high"></i></button>
+                    <h2 class="text-3xl font-black text-deepPurple dark:text-tosca">Asesmen Awal 📝</h2>
+                </div>
+                
+                <div id="pretest-container" class="canva-card p-6 sm:p-8">
+                    <!-- Dynamic Content via JS -->
+                </div>
+            </section>
+
+            <!-- 4. Materi Pembelajaran -->
+            <section id="sec-materi" class="page-section hidden max-w-4xl mx-auto space-y-8">
+                <div class="flex justify-between items-end mb-6 border-b-2 border-gray-200 dark:border-gray-700 pb-4">
+                    <div class="flex items-center gap-4">
+                        <button onclick="tts('Materi Pembelajaran. Bagian pertama adalah Kosakata Fasilitas Sekolah. Berikut adalah daftar ruangan beserta fungsinya dalam bahasa Inggris.')" class="bg-tosca text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition"><i class="fa-solid fa-volume-high"></i></button>
+                        <h2 class="text-3xl font-black text-deepPurple dark:text-tosca">Let's Learn! 📖</h2>
+                    </div>
+                </div>
+
+                <!-- Vocabulary List -->
+                <div>
+                    <h3 class="text-xl font-bold mb-4 flex items-center gap-2"><i class="fa-solid fa-building text-tosca"></i> A. School Facilities (Fasilitas Sekolah)</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 shadow flex gap-4 items-center">
+                            <i class="fa-solid fa-chalkboard-user text-3xl text-blue-500"></i>
+                            <div><strong class="block">Classroom</strong><span class="text-xs text-gray-500">Ruang Kelas (Place to study)</span></div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 shadow flex gap-4 items-center">
+                            <i class="fa-solid fa-book-open-reader text-3xl text-amber-500"></i>
+                            <div><strong class="block">Library</strong><span class="text-xs text-gray-500">Perpustakaan (Place to read)</span></div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 shadow flex gap-4 items-center">
+                            <i class="fa-solid fa-utensils text-3xl text-orange-500"></i>
+                            <div><strong class="block">Canteen / Cafeteria</strong><span class="text-xs text-gray-500">Kantin (Place to eat)</span></div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 shadow flex gap-4 items-center">
+                            <i class="fa-solid fa-flask text-3xl text-emerald-500"></i>
+                            <div><strong class="block">Laboratory</strong><span class="text-xs text-gray-500">Laboratorium (For experiments)</span></div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 shadow flex gap-4 items-center">
+                            <i class="fa-solid fa-briefcase-medical text-3xl text-red-500"></i>
+                            <div><strong class="block">Clinic / UKS</strong><span class="text-xs text-gray-500">Klinik (For sick students)</span></div>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 shadow flex gap-4 items-center">
+                            <i class="fa-solid fa-users text-3xl text-purple-500"></i>
+                            <div><strong class="block">Teacher's Room</strong><span class="text-xs text-gray-500">Ruang Guru</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prepositions InfoBox -->
+                <div class="info-box my-8 flex flex-col sm:flex-row gap-6 items-center">
+                    <div class="flex-grow">
+                        <h3 class="text-xl font-bold mb-2 flex items-center gap-2"><i class="fa-solid fa-lightbulb text-yellow-300"></i> Tahukah Kamu?</h3>
+                        <p class="text-sm md:text-base leading-relaxed">
+                            Untuk menjelaskan di mana letak sebuah ruangan, kita menggunakan <b>Prepositions of Place</b> (Kata depan penunjuk tempat).
+                        </p>
+                        <ul class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                            <li><i class="fa-solid fa-arrow-right-long mr-2"></i> <b>Next to / Beside:</b> Di sebelah</li>
+                            <li><i class="fa-solid fa-arrows-left-right mr-2"></i> <b>Between:</b> Di antara (2 benda)</li>
+                            <li><i class="fa-solid fa-arrow-up mr-2"></i> <b>In front of:</b> Di depan</li>
+                            <li><i class="fa-solid fa-arrow-down mr-2"></i> <b>Behind:</b> Di belakang</li>
+                            <li><i class="fa-solid fa-road mr-2"></i> <b>Across from:</b> Di seberang</li>
+                        </ul>
+                    </div>
+                    <div class="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center shrink-0">
+                        <i class="fa-regular fa-map text-5xl"></i>
+                    </div>
+                </div>
+
+                <!-- Example Sentence Table -->
+                <div class="canva-card p-6">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <button onclick="tts('Contoh penggunaan kalimat. The library is next to the principal office. Artinya Perpustakaan ada di sebelah ruang kepala sekolah.')" class="text-tosca hover:text-deepPurple"><i class="fa-solid fa-volume-high"></i></button>
+                        C. Example Sentences
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-white uppercase bg-deepPurple rounded-t-lg">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 rounded-tl-lg">English Sentence</th>
+                                    <th scope="col" class="px-6 py-3 rounded-tr-lg">Meaning (Arti)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-gray-800 border-b dark:border-gray-700">
+                                <tr>
+                                    <td class="px-6 py-4 font-medium border-b dark:border-gray-700">The library is zz<b>next to</b> the principal's office.</td>
+                                    <td class="px-6 py-4 border-b dark:border-gray-700">Perpustakaan ada di sebelah ruang kepala sekolah.</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 font-medium border-b dark:border-gray-700">The canteen is <b>between</b> the clinic and the restroom.</td>
+                                    <td class="px-6 py-4 border-b dark:border-gray-700">Kantin ada di antara klinik dan toilet.</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 font-medium">The flag ceremony is in the <b>school yard</b>.</td>
+                                    <td class="px-6 py-4">Upacara bendera ada di lapangan sekolah.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. Simulasi / Aktivitas -->
+            <section id="sec-simulasi" class="page-section hidden max-w-4xl mx-auto">
+                <div class="flex items-center gap-4 mb-6">
+                    <button onclick="tts('Simulasi. Pasangkan nama ruangan di sebelah kiri dengan fungsinya di sebelah kanan. Klik satu kotak di kiri, lalu klik kotak yang cocok di kanan.')" class="bg-tosca text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition"><i class="fa-solid fa-volume-high"></i></button>
+                    <h2 class="text-3xl font-black text-deepPurple dark:text-tosca">Interactive Match! 🧩</h2>
+                </div>
+                
+                <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl mb-6 text-sm">
+                    <strong>Cara Bermain:</strong> Klik kotak lokasi di kolom Kiri, lalu klik fungsi yang cocok di kolom Kanan. Jika benar, warnanya akan berubah tosca!
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 md:gap-8 relative" id="matchGameContainer">
+                    <!-- Left Column (Locations) -->
+                    <div class="space-y-4" id="match-left">
+                        <!-- Populated by JS -->
+                    </div>
+                    <!-- Right Column (Functions) -->
+                    <div class="space-y-4" id="match-right">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+                <div id="simulasi-feedback" class="mt-6 text-center font-bold text-lg hidden"></div>
+            </section>
+
+            <!-- 6. Kuis HOTS -->
+            <section id="sec-kuis" class="page-section hidden max-w-3xl mx-auto relative">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-3xl font-black text-deepPurple dark:text-tosca">Kuis HOTS 🚀</h2>
+                    <div class="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 px-4 py-2 rounded-full font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-stopwatch"></i> <span id="quiz-timer">10:00</span>
+                    </div>
+                </div>
+
+                <div id="kuis-start-screen" class="canva-card p-8 text-center">
+                    <i class="fa-solid fa-brain text-6xl text-tosca mb-4"></i>
+                    <h3 class="text-2xl font-bold mb-2">Siap Mengerjakan Kuis?</h3>
+                    <p class="text-gray-600 dark:text-gray-300 mb-6">10 Soal Analisis Cerita (HOTS). Waktu pengerjaan 10 menit. Bacalah konteks cerita dengan teliti sebelum menjawab!</p>
+                    <button onclick="startQuiz()" class="btn-3d shadow-3d-purple bg-deepPurple text-white px-8 py-3 rounded-xl font-bold text-lg">Mulai Kuis Sekarang</button>
+                </div>
+
+                <div id="kuis-active-screen" class="hidden">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6 dark:bg-gray-700">
+                        <div id="quiz-progress-bar" class="bg-tosca h-2.5 rounded-full" style="width: 10%"></div>
+                    </div>
+                    <div id="quiz-question-container" class="canva-card p-6 sm:p-8">
+                        <!-- Quiz Content Dynamic -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7. Asesmen Akhir -->
+            <section id="sec-asesmen-akhir" class="page-section hidden max-w-3xl mx-auto">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-black text-deepPurple dark:text-tosca mb-2">Asesmen Akhir 🎓</h2>
+                    <p class="text-gray-600 dark:text-gray-400">Ujian akhir untuk mengukur pemahaman utuhmu tentang School Buildings.</p>
+                </div>
+
+                <div id="final-test-container" class="canva-card p-6 sm:p-8">
+                    <!-- Loaded via JS -->
+                </div>
+            </section>
+
+            <!-- 8. Refleksi -->
+            <section id="sec-refleksi" class="page-section hidden max-w-2xl mx-auto">
+                <h2 class="text-3xl font-black text-deepPurple dark:text-tosca mb-6 text-center">Jurnal Refleksiku 📓</h2>
+                <div class="canva-card p-6 sm:p-8">
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-2">Saya sudah memahami...</label>
+                            <textarea id="ref_1" rows="2" class="w-full p-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-tosca outline-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-2">Hal yang paling menarik dari pelajaran ini adalah...</label>
+                            <textarea id="ref_2" rows="2" class="w-full p-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-tosca outline-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-2">Hal yang masih membingungkan adalah...</label>
+                            <textarea id="ref_3" rows="2" class="w-full p-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 focus:ring-2 focus:ring-tosca outline-none"></textarea>
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 dark:text-gray-300 mb-2">Perasaanku setelah belajar (Pilih Emoticon):</label>
+                            <div class="flex gap-4 justify-center mt-2">
+                                <label class="cursor-pointer group"><input type="radio" name="emot" value="Sangat Senang" class="hidden"><div class="text-4xl grayscale group-hover:grayscale-0 transition peer-checked:grayscale-0 scale-100 hover:scale-125 op-emot" onclick="selectEmot(this)">🤩</div></label>
+                                <label class="cursor-pointer group"><input type="radio" name="emot" value="Senang" class="hidden"><div class="text-4xl grayscale group-hover:grayscale-0 transition peer-checked:grayscale-0 scale-100 hover:scale-125 op-emot" onclick="selectEmot(this)">😊</div></label>
+                                <label class="cursor-pointer group"><input type="radio" name="emot" value="Biasa" class="hidden"><div class="text-4xl grayscale group-hover:grayscale-0 transition peer-checked:grayscale-0 scale-100 hover:scale-125 op-emot" onclick="selectEmot(this)">😐</div></label>
+                                <label class="cursor-pointer group"><input type="radio" name="emot" value="Bingung" class="hidden"><div class="text-4xl grayscale group-hover:grayscale-0 transition peer-checked:grayscale-0 scale-100 hover:scale-125 op-emot" onclick="selectEmot(this)">😵‍💫</div></label>
+                            </div>
+                        </div>
+                        <button onclick="saveReflection()" class="w-full bg-tosca text-white font-bold py-3 rounded-xl hover:bg-teal-500 shadow-lg mt-4">Simpan Refleksi</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 9. Sertifikat -->
+            <section id="sec-sertifikat" class="page-section hidden max-w-4xl mx-auto text-center">
+                <h2 class="text-3xl font-black text-deepPurple dark:text-tosca mb-4">Sertifikat Penghargaan 🏆</h2>
+                <p class="mb-8 text-gray-600 dark:text-gray-400">Unduh sertifikat ini sebagai bukti penyelesaian belajarmu!</p>
+                
+                <div class="relative w-full max-w-3xl mx-auto bg-gray-200 rounded-2xl overflow-hidden shadow-2xl mb-8 aspect-[1.414]">
+                    <!-- Visible Preview of Certificate -->
+                    <div class="absolute inset-0 bg-gradient-to-br from-deepPurple/5 to-tosca/10 flex flex-col items-center justify-center p-8 border-8 border-deepPurple m-4 bg-white dark:bg-gray-100">
+                        <div class="w-20 h-20 bg-tosca text-white rounded-full flex items-center justify-center text-4xl mb-4"><i class="fa-solid fa-award"></i></div>
+                        <h1 class="text-3xl md:text-5xl font-black text-deepPurple mb-2 font-serif uppercase">Certificate of Completion</h1>
+                        <p class="text-gray-600 mb-6 font-bold tracking-widest">THIS IS PRESENTED TO</p>
+                        <h2 class="text-4xl font-extrabold text-tosca border-b-2 border-gray-300 pb-2 mb-4 px-10" id="cert-preview-name">Nama Murid</h2>
+                        <p class="text-xl text-gray-700 font-bold mb-1">Kelas: <span id="cert-preview-class">VII</span></p>
+                        <p class="text-gray-600 mb-6 max-w-lg text-sm">For successfully completing the interactive learning module <b>"This is my school Unit 1: School Buildings"</b> with outstanding performance.</p>
+                        
+                        <div class="flex justify-between w-full max-w-lg px-8 mt-4">
+                            <div class="text-center">
+                                <p class="text-2xl font-black text-deepPurple border-b border-gray-400 pb-1" id="cert-preview-score">0</p>
+                                <p class="text-xs text-gray-500 font-bold uppercase mt-1">Final Score</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-lg font-bold text-gray-800 border-b border-gray-400 pb-1" id="cert-preview-date">Tgl</p>
+                                <p class="text-xs text-gray-500 font-bold uppercase mt-1">Date</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="downloadCertificate()" class="btn-3d shadow-3d-purple bg-deepPurple hover:bg-deepPurpleLight text-white font-extrabold py-4 px-8 rounded-full text-lg inline-flex items-center gap-3">
+                    <i class="fa-solid fa-download"></i> Download Sertifikat PNG
+                </button>
+            </section>
+
+        </main>
+
+        <!-- Global Navigation Footer (visible in sections other than menu) -->
+        <footer id="app-footer" class="hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 sticky bottom-0 z-40">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <button id="btnPrev" onclick="navStep(-1)" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl font-bold flex items-center gap-2 transition">
+                    <i class="fa-solid fa-chevron-left"></i> Sebelumnya
+                </button>
+                <button onclick="goHome()" class="w-12 h-12 bg-tosca hover:bg-teal-500 text-white rounded-full flex items-center justify-center shadow-lg transition transform hover:scale-110">
+                    <i class="fa-solid fa-house"></i>
+                </button>
+                <button id="btnNext" onclick="navStep(1)" class="px-5 py-2.5 bg-deepPurple hover:bg-deepPurpleLight text-white rounded-xl font-bold flex items-center gap-2 transition shadow shadow-deepPurple/30">
+                    Selanjutnya <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- HIDDEN ACTUAL A4 CERTIFICATE CONTAINER FOR HTML2CANVAS -->
+    <div id="cert-container">
+        <div style="background: white; border: 8px solid #3C096C; width: 1043px; height: 714px; padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+            
+            <div style="position: absolute; top: 40px; left: 40px; color: #2EC4B6; font-size: 80px; opacity: 0.2;"><i class="fa-solid fa-school"></i></div>
+            <div style="position: absolute; bottom: 40px; right: 40px; color: #3C096C; font-size: 80px; opacity: 0.1;"><i class="fa-solid fa-award"></i></div>
+
+            <div style="width: 100px; height: 100px; background: #2EC4B6; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 45px; margin-bottom: 20px;">
+                <i class="fa-solid fa-award"></i>
+            </div>
+            
+            <h1 style="font-size: 60px; color: #3C096C; font-weight: 900; margin-bottom: 10px; text-transform: uppercase;">Certificate of Completion</h1>
+            <p style="font-size: 20px; color: #666; font-weight: bold; letter-spacing: 4px; margin-bottom: 30px;">THIS IS PROUDLY PRESENTED TO</p>
+            
+            <h2 id="cert-export-name" style="font-size: 55px; color: #2EC4B6; border-bottom: 3px solid #ccc; padding-bottom: 10px; margin-bottom: 10px; min-width: 600px; text-align: center;">Nama Murid</h2>
+            <p id="cert-export-class" style="font-size: 25px; color: #444; font-weight: bold; margin-bottom: 30px;">Kelas: VII</p>
+            
+            <p style="font-size: 22px; color: #555; text-align: center; max-width: 800px; line-height: 1.5; margin-bottom: 40px;">
+                For successfully completing the interactive learning module <b>"This is my school Unit 1: School Buildings"</b> with outstanding performance and dedication.
+            </p>
+            
+            <div style="display: flex; justify-content: space-between; width: 700px;">
+                <div style="text-align: center;">
+                    <p id="cert-export-score" style="font-size: 40px; font-weight: 900; color: #3C096C; border-bottom: 2px solid #999; padding-bottom: 5px; width: 150px; margin: 0 auto;">100</p>
+                    <p style="font-size: 16px; color: #777; font-weight: bold; text-transform: uppercase; margin-top: 5px;">Final Score</p>
+                </div>
+                <div style="text-align: center;">
+                    <p id="cert-export-date" style="font-size: 24px; font-weight: bold; color: #333; border-bottom: 2px solid #999; padding-bottom: 5px; width: 250px; margin: 0 auto; margin-top: 15px;">Date</p>
+                    <p style="font-size: 16px; color: #777; font-weight: bold; text-transform: uppercase; margin-top: 5px;">Date of Issue</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+    <script>
+        // State
+        let state = {
+            studentName: '',
+            studentClass: '',
+            currentMenu: 'menu',
+            pretestScore: 0,
+            finalScore: 0,
+            quizScore: 0,
+            completedSteps: new Set(),
+            theme: 'light',
+            bgmPlaying: false
+        };
+
+        const navOrder = ['menu', 'tujuan', 'apersepsi', 'asesmen-awal', 'materi', 'simulasi', 'kuis', 'asesmen-akhir', 'refleksi', 'sertifikat'];
+
+        // Elements
+        const audioEl = document.getElementById('bgmMusic');
+        audioEl.volume = 0.3; // low volume for study
+
+        // Util: Custom Toast (Replaces Alert)
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
+        // Feature: Dark/Light Mode
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const icon = document.getElementById('themeIcon');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                icon.className = 'fa-solid fa-moon';
+            } else {
+                html.classList.add('dark');
+                icon.className = 'fa-solid fa-sun';
+            }
+        }
+
+        // Feature: Audio BGM
+        function toggleBGM() {
+            const icon = document.getElementById('bgmIcon');
+            if (state.bgmPlaying) {
+                audioEl.pause();
+                icon.className = 'fa-solid fa-music';
+                state.bgmPlaying = false;
+            } else {
+                audioEl.play().catch(e => console.log("Audio play blocked by browser policy"));
+                icon.className = 'fa-solid fa-volume-xmark';
+                state.bgmPlaying = true;
+            }
+        }
+
+        // Feature: Text to Speech (Indonesian by default)
+        function tts(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'id-ID'; // Indonesian accent/voice
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                showToast("Browser tidak mendukung Text-to-Speech.");
+            }
+        }
+
+        // UI Logic: Login
+        function toggleManualClass() {
+            const sel = document.getElementById('studentClassSelect').value;
+            const cont = document.getElementById('manualClassContainer');
+            if (sel === 'manual') cont.classList.remove('hidden');
+            else cont.classList.add('hidden');
+        }
+
+        function startLearning() {
+            const name = document.getElementById('studentNameInput').value.trim();
+            let cls = document.getElementById('studentClassSelect').value;
+            if (cls === 'manual') {
+                cls = document.getElementById('manualClassInput').value.trim();
+            }
+
+            if (!name || !cls) {
+                showToast('Harap isi Nama dan Kelas terlebih dahulu!');
+                return;
+            }
+
+            state.studentName = name;
+            state.studentClass = cls;
+            
+            document.getElementById('displayStudentInfo').innerText = `${name} (${cls})`;
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.remove('hidden');
+            document.getElementById('app-screen').classList.add('flex');
+            
+            // Auto play bgm on interaction
+            if(!state.bgmPlaying) toggleBGM();
+        }
+
+        // UI Logic: Navigation
+        function navTo(targetId) {
+            // Hide all sections
+            document.querySelectorAll('.page-section').forEach(el => el.classList.add('hidden'));
+            
+            // Show target
+            document.getElementById(`sec-${targetId}`).classList.remove('hidden');
+            state.currentMenu = targetId;
+            state.completedSteps.add(targetId);
+
+            // Update Header Progress
+            let completedCount = state.completedSteps.size - (state.completedSteps.has('menu')?1:0);
+            let totalSteps = navOrder.length - 1;
+            document.getElementById('globalProgress').style.width = `${(completedCount / totalSteps) * 100}%`;
+
+            // Footer visibility
+            const footer = document.getElementById('app-footer');
+            if (targetId === 'menu') {
+                footer.classList.add('hidden');
+            } else {
+                footer.classList.remove('hidden');
+                // Adjust prev/next buttons
+                let idx = navOrder.indexOf(targetId);
+                document.getElementById('btnPrev').style.visibility = (idx <= 1) ? 'hidden' : 'visible';
+                document.getElementById('btnNext').style.visibility = (idx >= navOrder.length - 1) ? 'hidden' : 'visible';
+            }
+            window.scrollTo(0, 0);
+
+            // Special triggers
+            if(targetId === 'asesmen-awal' && !pretestRendered) renderPretest();
+            if(targetId === 'simulasi' && !simulasiRendered) renderSimulasi();
+            if(targetId === 'asesmen-akhir' && !finaltestRendered) renderFinaltest();
+            if(targetId === 'sertifikat') prepCertificate();
+        }
+
+        function goHome() {
+            navTo('menu');
+        }
+
+        function navStep(dir) {
+            let idx = navOrder.indexOf(state.currentMenu);
+            let nextIdx = idx + dir;
+            if (nextIdx >= 1 && nextIdx < navOrder.length) {
+                navTo(navOrder[nextIdx]);
+            }
+        }
+
+        // Emoticon Selector
+        function selectEmot(el) {
+            document.querySelectorAll('.op-emot').forEach(i => i.classList.add('grayscale'));
+            el.classList.remove('grayscale');
+        }
+        function saveReflection() {
+            showToast("Jurnal refleksi berhasil disimpan! Hebat!");
+            setTimeout(() => { navStep(1); }, 1500);
+        }
+
+        /* ================== ASESMEN AWAL (5 Soal) ================== */
+        const pretestData = [
+            { q: "Apa bahasa Inggris dari 'Perpustakaan'?", options: ["Classroom", "Library", "Canteen", "Laboratory"], a: 1 },
+            { q: "Dimana siswa biasanya makan dan minum saat istirahat?", options: ["Clinic", "Teacher's room", "Canteen", "School yard"], a: 2 },
+            { q: "The clinic is ... the teacher's room and the principal's office. (di antara)", options: ["next to", "in front of", "behind", "between"], a: 3 },
+            { q: "Apa bahasa Inggris dari 'di depan'?", options: ["behind", "across from", "in front of", "beside"], a: 2 },
+            { q: "Jika kamu sakit perut di sekolah, kemana kamu harus pergi?", options: ["Laboratory", "School yard", "Library", "Clinic / UKS"], a: 3 }
+        ];
+        let pretestRendered = false;
+
+        function renderPretest() {
+            let html = '<div class="space-y-6">';
+            pretestData.forEach((item, index) => {
+                html += `
+                <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-white dark:bg-gray-800">
+                    <p class="font-bold text-gray-800 dark:text-gray-200 mb-3">${index+1}. ${item.q}</p>
+                    <div class="space-y-2">
+                        ${item.options.map((opt, i) => `
+                            <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700 transition">
+                                <input type="radio" name="pretest_${index}" value="${i}" class="w-4 h-4 text-tosca focus:ring-tosca">
+                                <span class="text-gray-700 dark:text-gray-300">${opt}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>`;
+            });
+            html += `<button onclick="submitPretest()" class="w-full bg-deepPurple text-white font-bold py-3 rounded-xl hover:bg-deepPurpleLight mt-4 shadow">Cek Hasil</button>
+                     <div id="pretestResult" class="hidden mt-4 p-4 rounded-xl font-bold text-center"></div></div>`;
+            document.getElementById('pretest-container').innerHTML = html;
+            pretestRendered = true;
+        }
+
+        function submitPretest() {
+            let score = 0;
+            let answered = 0;
+            pretestData.forEach((item, index) => {
+                let selected = document.querySelector(`input[name="pretest_${index}"]:checked`);
+                if (selected) {
+                    answered++;
+                    if (parseInt(selected.value) === item.a) score += 20;
+                }
+            });
+            
+            if (answered < 5) {
+                showToast("Harap jawab semua pertanyaan terlebih dahulu!");
+                return;
+            }
+
+            state.pretestScore = score;
+            const res = document.getElementById('pretestResult');
+            res.classList.remove('hidden');
+            if (score >= 80) {
+                res.className = "mt-4 p-4 rounded-xl font-bold text-center bg-green-100 text-green-700";
+                res.innerHTML = `Skor kamu: ${score}/100. Luar biasa! Pemahaman awalmu sangat baik! 🌟`;
+                confetti({particleCount: 100, spread: 70, origin: {y: 0.6}});
+            } else {
+                res.className = "mt-4 p-4 rounded-xl font-bold text-center bg-blue-100 text-blue-700";
+                res.innerHTML = `Skor kamu: ${score}/100. Mari belajar lebih dalam di menu materi! 💪`;
+            }
+        }
+
+        /* ================== SIMULASI (Match / Pasangkan) ================== */
+        let simulasiRendered = false;
+        let selectedLeft = null;
+        let matchedCount = 0;
+
+        const matchPairs = [
+            { id: 'm1', left: 'Canteen', right: 'A place to buy food and drink during break time.' },
+            { id: 'm2', left: 'Library', right: 'A quiet place to borrow and read books.' },
+            { id: 'm3', left: 'Laboratory', right: 'A room for doing science experiments.' },
+            { id: 'm4', left: 'Clinic (UKS)', right: 'A place to rest when you feel sick at school.' },
+            { id: 'm5', left: 'School Yard', right: 'An open area for playing sports and flag ceremony.' }
+        ];
+
+        function renderSimulasi() {
+            let leftItems = [...matchPairs].sort(() => Math.random() - 0.5);
+            let rightItems = [...matchPairs].sort(() => Math.random() - 0.5);
+
+            document.getElementById('match-left').innerHTML = leftItems.map(item => 
+                `<div onclick="selectMatch('left', '${item.id}', this)" class="match-item border-2 border-gray-300 rounded-xl p-4 text-center font-bold text-deepPurple bg-white hover:border-tosca" data-id="${item.id}">${item.left}</div>`
+            ).join('');
+
+            document.getElementById('match-right').innerHTML = rightItems.map(item => 
+                `<div onclick="selectMatch('right', '${item.id}', this)" class="match-item border-2 border-gray-300 rounded-xl p-4 text-sm text-gray-700 bg-white hover:border-tosca flex items-center justify-center min-h-[60px]" data-id="${item.id}">${item.right}</div>`
+            ).join('');
+            
+            simulasiRendered = true;
+        }
+
+        function selectMatch(side, id, el) {
+            if (el.classList.contains('match-correct')) return;
+
+            if (side === 'left') {
+                document.querySelectorAll('#match-left .match-item').forEach(i => i.classList.remove('match-selected'));
+                el.classList.add('match-selected');
+                selectedLeft = { id, el };
+            } else if (side === 'right' && selectedLeft) {
+                if (selectedLeft.id === id) {
+                    // Correct match
+                    el.classList.add('match-correct', 'bg-green-100');
+                    el.innerHTML = '<i class="fa-solid fa-check-circle text-green-500 mr-2"></i>' + el.innerHTML;
+                    selectedLeft.el.classList.add('match-correct', 'bg-green-100');
+                    selectedLeft.el.classList.remove('match-selected');
+                    selectedLeft = null;
+                    matchedCount++;
+                    tts("Benar!");
+
+                    if (matchedCount === 5) {
+                        const fb = document.getElementById('simulasi-feedback');
+                        fb.classList.remove('hidden');
+                        fb.className = "mt-6 text-center font-bold text-lg text-tosca bg-toscaLight/30 p-4 rounded-xl border border-tosca";
+                        fb.innerHTML = "Luar Biasa! Kamu berhasil menjodohkan semua fasilitas dengan fungsinya! 🎉 <br> <span class='text-sm text-gray-600 dark:text-gray-400 font-normal mt-2 block'>Ini membuktikan bahwa dengan mencoba, kamu pasti bisa! (Growth Mindset)</span>";
+                        confetti({particleCount: 50, spread: 40});
+                    }
+                } else {
+                    // Wrong match
+                    showToast("Oops, coba pasangkan lagi dengan teliti!");
+                    selectedLeft.el.classList.remove('match-selected');
+                    selectedLeft = null;
+                }
+            } else if (side === 'right' && !selectedLeft) {
+                showToast("Klik kotak di sebelah Kiri terlebih dahulu!");
+            }
+        }
+
+        /* ================== KUIS HOTS (10 Soal + Timer + Context) ================== */
+        const kuisData = [
+            {
+                ctx: "During the break time, Galang wants to borrow an English dictionary, but he feels hungry. He decides to buy a sandwich first before getting the dictionary.",
+                q: "Where does Galang go first, and where does he go next?",
+                opts: ["Library then Canteen", "Canteen then Library", "Classroom then Canteen", "Clinic then Library"],
+                a: 1, exp: "Galang merasa lapar dan membeli sandwich (Canteen) dulu, baru meminjam kamus (Library)."
+            },
+            {
+                ctx: "Look at this map note: The principal's office is next to the teacher's room. The library is across from the teacher's room.",
+                q: "If you walk out of the library and walk straight forward crossing the hallway, which room will you see?",
+                opts: ["Canteen", "Principal's office", "Teacher's room", "Laboratory"],
+                a: 2, exp: "Library berseberangan (across from) dengan Teacher's room. Jadi jika berjalan lurus menyeberang, akan sampai di Teacher's room."
+            },
+            {
+                ctx: "Siti is doing a chemistry experiment using test tubes and microscopes. Suddenly, her friend cuts his finger and needs a bandage.",
+                q: "Where is Siti now, and where should her friend go?",
+                opts: ["Classroom and Canteen", "Laboratory and Clinic", "Library and Teacher's room", "School yard and Clinic"],
+                a: 1, exp: "Eksperimen kimia dilakukan di Laboratory, dan teman yang luka butuh perban di Clinic/UKS."
+            },
+            {
+                ctx: "The school has a strict rule: 'No eating or loud talking inside'.",
+                q: "Which building applies this rule the most?",
+                opts: ["Canteen", "School Yard", "Library", "Teacher's Room"],
+                a: 2, exp: "Library adalah tempat membaca, jadi tidak boleh makan dan harus tenang."
+            },
+            {
+                ctx: "Budi is standing between the science laboratory and the computer room. He walks in front of the laboratory.",
+                q: "What preposition describes Budi's position relative to the laboratory when he stands between the two rooms?",
+                opts: ["Behind", "In front of", "Beside / Next to", "Across from"],
+                a: 2, exp: "Jika Budi berada di antara laboratorium dan ruang komputer, berarti posisi Budi berada di sebelah (next to/beside) kedua ruangan tersebut."
+            }
+            // Skipping to 5 items for brevity but making sure logic works, prompt asked for 10, let's provide 5 robust ones to save space but maintain quality. I will add 5 more simple HOTS.
+            ,{
+                ctx: "It is Monday morning. All students are wearing complete uniforms, hats, and ties. They are standing in lines.",
+                q: "Where are the students, and what are they doing?",
+                opts: ["In the classroom, studying", "In the library, reading", "In the school yard, having flag ceremony", "In the canteen, having breakfast"],
+                a: 2, exp: "Pagi hari Senin, berseragam lengkap, berdiri berbaris adalah ciri-ciri upacara bendera di lapangan sekolah (school yard)."
+            },
+            {
+                ctx: "The clinic is between class VII A and class VII B. Class VII C is next to class VII B.",
+                q: "Which room is NOT next to class VII B?",
+                opts: ["The Clinic", "Class VII C", "Class VII A", "None of the above"],
+                a: 2, exp: "VII B di sebelah Clinic dan VII C. VII A ada di sebelah Clinic, jadi VII A tidak bersebelahan langsung dengan VII B."
+            },
+            {
+                ctx: "Teacher: 'Please return these maps and globes to the shelf.'",
+                q: "Where does this conversation most likely happen?",
+                opts: ["Laboratory", "Canteen", "Classroom / Social Studies Room", "Clinic"],
+                a: 2, exp: "Peta dan globe biasanya digunakan saat pelajaran IPS di dalam ruang kelas."
+            },
+            {
+                ctx: "Andi lost his wallet. Someone found it and gave it to a staff member who announced it using a microphone to the whole school.",
+                q: "Where is the announcement usually made from?",
+                opts: ["Teacher's room / Administration office", "Restroom", "School yard", "Library"],
+                a: 0, exp: "Pengumuman menggunakan mikrofon sentral biasanya dilakukan dari ruang guru atau ruang tata usaha."
+            },
+            {
+                ctx: "You are standing facing the Canteen. The Library is exactly behind you.",
+                q: "What is the position of the Library compared to the Canteen?",
+                opts: ["Next to", "Across from", "Between", "In front of"],
+                a: 1, exp: "Jika kamu menghadap kantin dan perpustakaan di belakangmu, berarti perpustakaan dan kantin saling berhadapan / berseberangan (Across from)."
+            }
+        ];
+
+        let currentQuizIndex = 0;
+        let quizAnswers = [];
+        let timerInterval;
+        let timeLeft = 600; // 10 minutes
+
+        function startQuiz() {
+            document.getElementById('kuis-start-screen').classList.add('hidden');
+            document.getElementById('kuis-active-screen').classList.remove('hidden');
+            currentQuizIndex = 0;
+            quizAnswers = [];
+            timeLeft = 600;
+            
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                let m = Math.floor(timeLeft / 60);
+                let s = timeLeft % 60;
+                document.getElementById('quiz-timer').innerText = `${m}:${s<10?'0':''}${s}`;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    finishQuiz();
+                }
+            }, 1000);
+
+            renderQuizQuestion();
+        }
+
+        function renderQuizQuestion() {
+            if (currentQuizIndex >= kuisData.length) {
+                finishQuiz();
+                return;
+            }
+
+            const q = kuisData[currentQuizIndex];
+            document.getElementById('quiz-progress-bar').style.width = `${((currentQuizIndex)/kuisData.length)*100}%`;
+
+            let html = `
+                <div class="mb-4">
+                    <span class="text-xs font-bold text-tosca uppercase tracking-widest">Soal ${currentQuizIndex + 1} dari 10</span>
+                </div>
+                <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl mb-6 text-sm text-gray-700 dark:text-gray-300 border-l-4 border-blue-400 italic">
+                    "${q.ctx}"
+                </div>
+                <h3 class="text-xl font-bold mb-6">${q.q}</h3>
+                <div class="space-y-3">
+                    ${q.opts.map((opt, i) => `
+                        <button onclick="selectQuizOpt(${i})" class="w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-tosca hover:bg-toscaLight/20 dark:border-gray-700 dark:hover:border-tosca transition font-semibold text-gray-700 dark:text-gray-200">
+                            ${String.fromCharCode(65+i)}. ${opt}
+                        </button>
+                    `).join('')}
+                </div>
+                <div id="quiz-explanation" class="hidden mt-6 p-4 rounded-xl text-sm font-bold"></div>
+                <button id="quiz-next-btn" onclick="nextQuiz()" class="hidden w-full mt-4 bg-deepPurple text-white py-3 rounded-xl font-bold">Lanjut Soal Berikutnya</button>
+            `;
+            document.getElementById('quiz-question-container').innerHTML = html;
+        }
+
+        function selectQuizOpt(idx) {
+            if (document.getElementById('quiz-next-btn').classList.contains('hidden') === false) return; // already answered
+
+            const q = kuisData[currentQuizIndex];
+            const isCorrect = (idx === q.a);
+            if (isCorrect) state.quizScore += 10;
+
+            const expDiv = document.getElementById('quiz-explanation');
+            expDiv.classList.remove('hidden');
+            if (isCorrect) {
+                expDiv.className = "mt-6 p-4 rounded-xl text-sm font-bold bg-green-100 text-green-800 border border-green-300";
+                expDiv.innerHTML = `<i class="fa-solid fa-check-circle mr-2"></i> <b>Benar!</b> ${q.exp}`;
+                tts("Benar!");
+            } else {
+                expDiv.className = "mt-6 p-4 rounded-xl text-sm font-bold bg-red-100 text-red-800 border border-red-300";
+                expDiv.innerHTML = `<i class="fa-solid fa-times-circle mr-2"></i> <b>Kurang Tepat.</b> ${q.exp}`;
+                tts("Kurang tepat.");
+            }
+
+            document.getElementById('quiz-next-btn').classList.remove('hidden');
+        }
+
+        function nextQuiz() {
+            currentQuizIndex++;
+            renderQuizQuestion();
+        }
+
+        function finishQuiz() {
+            clearInterval(timerInterval);
+            let html = `
+                <div class="text-center">
+                    <i class="fa-solid fa-trophy text-6xl text-accentYellow mb-4"></i>
+                    <h3 class="text-2xl font-bold mb-2">Kuis Selesai!</h3>
+                    <p class="text-gray-600 mb-6">Skor Kuis HOTS kamu:</p>
+                    <div class="text-5xl font-black text-deepPurple mb-6">${state.quizScore} <span class="text-xl">/ 100</span></div>
+                    <button onclick="navStep(1)" class="bg-tosca text-white px-8 py-3 rounded-xl font-bold">Lanjut ke Asesmen Akhir</button>
+                </div>
+            `;
+            document.getElementById('quiz-question-container').innerHTML = html;
+            if (state.quizScore >= 90) confetti({particleCount: 150, spread: 80});
+        }
+
+        /* ================== ASESMEN AKHIR (10 Soal Biasa-Sedang) ================== */
+        const finalData = [
+            { q: "Where do students usually read books?", opts: ["Canteen", "Library", "School Yard", "Clinic"], a: 1 },
+            { q: "Where do teachers sit and rest?", opts: ["Teacher's room", "Laboratory", "Classroom", "Restroom"], a: 0 },
+            { q: "The place where you can eat your lunch is the ...", opts: ["Clinic", "Canteen", "Library", "Office"], a: 1 },
+            { q: "What is 'Di sebelah' in English?", opts: ["Between", "Behind", "In front of", "Next to"], a: 3 },
+            { q: "The principal's office is ______ the teacher's room and the clinic. (Di antara)", opts: ["next to", "between", "across from", "behind"], a: 1 },
+            { q: "A place for playing sports like basketball is ...", opts: ["Laboratory", "School Yard", "Restroom", "Library"], a: 1 },
+            { q: "Where do you do science experiments?", opts: ["Classroom", "Canteen", "Laboratory", "Clinic"], a: 2 },
+            { q: "The whiteboard is ______ the classroom. (Di depan)", opts: ["in front of", "behind", "next to", "between"], a: 0 },
+            { q: "If you feel dizzy and need to lie down, you go to the ...", opts: ["Teacher's room", "School Yard", "Clinic / UKS", "Library"], a: 2 },
+            { q: "What is 'Di seberang' in English?", opts: ["Next to", "Between", "Behind", "Across from"], a: 3 }
+        ];
+        let finaltestRendered = false;
+
+        function renderFinaltest() {
+            let html = '<div class="space-y-6">';
+            finalData.forEach((item, index) => {
+                html += `
+                <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-gray-50 dark:bg-gray-800">
+                    <p class="font-bold mb-3">${index+1}. ${item.q}</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        ${item.opts.map((opt, i) => `
+                            <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 bg-white cursor-pointer hover:border-tosca dark:bg-gray-700 dark:border-gray-600 transition">
+                                <input type="radio" name="final_${index}" value="${i}" class="text-tosca focus:ring-tosca">
+                                <span>${opt}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>`;
+            });
+            html += `<button onclick="submitFinalTest()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg mt-6 text-lg">Kumpulkan Jawaban</button>
+                     <div id="finalResult" class="hidden mt-6 p-6 rounded-2xl text-center bg-white shadow-xl border-t-8"></div></div>`;
+            document.getElementById('final-test-container').innerHTML = html;
+            finaltestRendered = true;
+        }
+
+        function submitFinalTest() {
+            let score = 0;
+            let answered = 0;
+            finalData.forEach((item, index) => {
+                let selected = document.querySelector(`input[name="final_${index}"]:checked`);
+                if (selected) {
+                    answered++;
+                    if (parseInt(selected.value) === item.a) score += 10;
+                }
+            });
+            
+            if (answered < 10) {
+                showToast("Selesaikan semua 10 pertanyaan terlebih dahulu!");
+                return;
+            }
+
+            state.finalScore = score;
+            let predikat = "";
+            let colorBorder = "";
+            if (score >= 90) { predikat = "Sangat Baik"; colorBorder = "border-emerald-500"; confetti({particleCount: 200, spread: 90, origin: {y: 0.5}});}
+            else if (score >= 80) { predikat = "Baik"; colorBorder = "border-blue-500"; }
+            else if (score >= 70) { predikat = "Cukup"; colorBorder = "border-yellow-500"; }
+            else { predikat = "Perlu Bimbingan"; colorBorder = "border-red-500"; }
+
+            const res = document.getElementById('finalResult');
+            res.classList.remove('hidden');
+            res.classList.add(colorBorder);
+            res.innerHTML = `
+                <h3 class="text-xl text-gray-600 mb-2">Nilai Akhir Asesmen</h3>
+                <div class="text-6xl font-black text-deepPurple mb-4">${score}</div>
+                <div class="inline-block px-4 py-2 rounded-full bg-gray-100 font-bold text-gray-800 tracking-widest uppercase mb-4">Predikat: ${predikat}</div>
+                <p class="text-sm text-gray-500 italic">Silakan lanjut ke bagian refleksi untuk menyelesaikan modul ini.</p>
+            `;
+            window.scrollTo({ top: res.offsetTop, behavior: 'smooth' });
+            tts(`Ujian selesai. Nilai kamu ${score}, predikat ${predikat}.`);
+        }
+
+        /* ================== SERTIFIKAT ================== */
+        function prepCertificate() {
+            // Check if final score exists, if not, set to 0 visually
+            const today = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+            
+            // Preview Update
+            document.getElementById('cert-preview-name').innerText = state.studentName || "Nama Murid";
+            document.getElementById('cert-preview-class').innerText = state.studentClass || "-";
+            document.getElementById('cert-preview-score').innerText = state.finalScore || 0;
+            document.getElementById('cert-preview-date').innerText = today;
+
+            // Actual Export Update
+            document.getElementById('cert-export-name').innerText = state.studentName || "Nama Murid";
+            document.getElementById('cert-export-class').innerText = "Kelas: " + (state.studentClass || "-");
+            document.getElementById('cert-export-score').innerText = state.finalScore || 0;
+            document.getElementById('cert-export-date').innerText = today;
+
+            if (state.finalScore >= 90) {
+                confetti({particleCount: 100, spread: 70, origin: {y: 0.1}});
+            }
+        }
+
+        function downloadCertificate() {
+            showToast("Sedang membuat sertifikat. Mohon tunggu...");
+            const certElement = document.getElementById('cert-container');
+            
+            html2canvas(certElement, {
+                scale: 2, // High resolution
+                backgroundColor: null,
+                logging: false
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Sertifikat_Bahasa_Inggris_${state.studentName.replace(/\s+/g, '_')}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                showToast("Sertifikat berhasil diunduh!");
+            }).catch(err => {
+                console.error(err);
+                showToast("Terjadi kesalahan saat mengunduh sertifikat.");
+            });
+        }
+    </script>
+</body>
+</html>
